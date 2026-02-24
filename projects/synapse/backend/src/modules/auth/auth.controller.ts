@@ -1,37 +1,33 @@
 import { Request, Response, NextFunction } from "express";
+import { registerSchema } from "./auth.validation";
+import { registerUser } from "./auth.service";
+import jwt from 'jsonwebtoken'
 
 // Cookie name used consistently across login, logout, and authMiddleware
-export const COOKIE_NAME = "token";
+export const COOKIE_NAME = "jwt_token";
 
-// Cookie options shared between login and logout so they always match.
-// secure: true in production ensures the cookie is only sent over HTTPS.
-// httpOnly: true prevents client-side JS from reading the cookie (XSS protection).
-// sameSite: "strict" blocks the cookie from being sent on cross-site requests (CSRF protection).
 export const COOKIE_OPTIONS = {
   httpOnly: true,
   secure: process.env.NODE_ENV === "production",
   sameSite: "strict" as const,
 };
 
-export const register = async (
-  _req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
-  // 1. Parse req.body
-  // 2. Validate body against registerSchema
-  //    - If validation fails → call next(zodError) and return early
-  // 3. Call registerUser({ name, email, password })
-  //    - If email already exists → service throws 409 → caught below → next(err)
-  // 4. Sign a JWT for the newly created user (auto-login after register):
-  //    jwt.sign({ id: user.id, email: user.email }, env.JWT_SECRET, { expiresIn: env.JWT_EXPIRES_IN })
-  // 5. Set the JWT as a httpOnly cookie using COOKIE_NAME and COOKIE_OPTIONS:
-  //    maxAge: 7 * 24 * 60 * 60 * 1000  (convert JWT_EXPIRES_IN "7d" → ms)
-  // 6. Strip the password field from the user object before sending
-  // 7. Return 201 { success: true, data: { user } }
+export const register = async ( _req: Request, res: Response, next: NextFunction ): Promise<void> => {
   try {
+    // 1. Parse req.body
+    // 2. Validate body against registerSchema
+    //    - If validation fails → call next(zodError) and return early
+    // 3. Call registerUser({ name, email, password })
+    //    - If email already exists → service throws 409 → caught below → next(err)
+    // 4. Sign a JWT for the newly created user (auto-login after register):
+    //    jwt.sign({ id: user.id, email: user.email }, env.JWT_SECRET, { expiresIn: env.JWT_EXPIRES_IN })
+    // 5. Set the JWT as a httpOnly cookie using COOKIE_NAME and COOKIE_OPTIONS:
+    //    maxAge: 7 * 24 * 60 * 60 * 1000  (convert JWT_EXPIRES_IN "7d" → ms)
+    // 6. Strip the password field from the user object before sending
+    // 7. Return 201 { success: true, data: { user } }
     res.status(200).json({ success: true });
-  } catch (err) {
+  }
+  catch (err) {
     next(err);
   }
 };

@@ -1,10 +1,6 @@
 import { User } from "@prisma/client";
 
-export const registerUser = async (_data: {
-  email: string;
-  password: string;
-  name?: string;
-}): Promise<User> => {
+export const registerUser = async (_data: { name?: string; email: string; password: string; confirmPassword: string; }): Promise<User> => {
   // 1. Check if a user with _data.email already exists:
   //    prisma.user.findUnique({ where: { email: _data.email } })
   //    - If found → throw new Error("Email already in use") with statusCode 409

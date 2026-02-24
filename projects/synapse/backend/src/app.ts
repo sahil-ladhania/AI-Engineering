@@ -3,7 +3,6 @@ import helmet from "helmet";
 import cors from "cors";
 import morgan from "morgan";
 import cookieParser from "cookie-parser";
-
 import { env } from "./config/env";
 import authRoutes from "./modules/auth/auth.routes";
 import chatRoutes from "./modules/chat/chat.routes";
