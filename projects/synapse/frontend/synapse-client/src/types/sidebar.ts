@@ -10,6 +10,7 @@ export interface SidebarProps {
   onLogout?: () => void
   open?: boolean
   onClose?: () => void
+  onToggle?: () => void
 }
 
 export interface ModelSelectorProps {

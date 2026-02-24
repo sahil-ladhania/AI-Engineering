@@ -1,3 +1,4 @@
+import Logo from '../Logo'
 import type { LoginModalProps } from '../../types/modals'
 
 export default function LoginModal({
@@ -29,6 +30,11 @@ export default function LoginModal({
         >
           ×
         </button>
+
+        {/* Brand */}
+        <div className="flex justify-center">
+          <Logo size="sm" />
+        </div>
 
         {/* Header */}
         <div className="flex flex-col gap-1">

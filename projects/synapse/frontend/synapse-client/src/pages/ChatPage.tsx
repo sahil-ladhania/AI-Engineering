@@ -8,7 +8,7 @@ export default function ChatPage({
   onModelChange = () => {},
   onLogout = () => {},
 }: ChatPageProps) {
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(true)
 
   return (
     <div
@@ -29,6 +29,7 @@ export default function ChatPage({
         onLogout={onLogout}
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
+        onToggle={() => setSidebarOpen((o) => !o)}
       />
 
       <ChatArea

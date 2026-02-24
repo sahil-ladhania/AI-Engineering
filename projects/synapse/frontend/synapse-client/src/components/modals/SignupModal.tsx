@@ -1,3 +1,4 @@
+import Logo from '../Logo'
 import type { SignupModalProps } from '../../types/modals'
 
 export default function SignupModal({
@@ -29,6 +30,11 @@ export default function SignupModal({
         >
           ×
         </button>
+
+        {/* Brand */}
+        <div className="flex justify-center">
+          <Logo size="sm" />
+        </div>
 
         {/* Header */}
         <div className="flex flex-col gap-1">
