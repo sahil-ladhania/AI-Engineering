@@ -1,35 +1,34 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
 import './App.css'
+import LandingPage from './pages/LandingPage'
+import ChatPage from './pages/ChatPage'
+import type { Modal, View } from './types/app'
 
-function App() {
-  const [count, setCount] = useState(0)
+export default function App() {
+  const [view, setView] = useState<View>('landing')
+  // const [view, setView] = useState<View>('chat')
+  const [modal, setModal] = useState<Modal>('none')
+  const [model, setModel] = useState('gpt-4o-mini')
+
+  if (view === 'chat') {
+    return (
+      <ChatPage
+        model={model}
+        onModelChange={setModel}
+        onLogout={() => setView('landing')}
+      />
+    )
+  }
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    <LandingPage
+      showLogin={modal === 'login'}
+      showSignup={modal === 'signup'}
+      onOpenLogin={() => setModal('login')}
+      onOpenSignup={() => setModal('signup')}
+      onCloseModal={() => setModal('none')}
+      onSwitchToLogin={() => setModal('login')}
+      onSwitchToSignup={() => setModal('signup')}
+    />
   )
 }
-
-export default App
