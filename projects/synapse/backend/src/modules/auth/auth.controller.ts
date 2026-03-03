@@ -12,7 +12,7 @@ export const COOKIE_NAME = "jwt_token";
 export const COOKIE_OPTIONS = {
   httpOnly: true,
   secure: process.env.NODE_ENV === "production",
-  sameSite: "strict" as const,
+  sameSite: "lax" as const,
 };
 
 export const register = async (req: Request, res: Response, next: NextFunction): Promise<void> => {

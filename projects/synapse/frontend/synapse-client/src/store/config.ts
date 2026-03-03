@@ -10,17 +10,17 @@ import {
   REGISTER,
 } from 'redux-persist'
 import storage from 'redux-persist/lib/storage'
+import authReducer from './slices/authSlice'
 
-// Add slice reducers here as the app grows
 const rootReducer = combineReducers({
-  // e.g. chat: chatReducer,
+  auth: authReducer,
 })
 
 const persistConfig = {
   key: 'synapse',
   version: 1,
   storage,
-  // whitelist: ['chat'],  ← opt-in persistence per slice
+  whitelist: ['auth'],
 }
 
 const persistedReducer = persistReducer(persistConfig, rootReducer)
@@ -30,14 +30,11 @@ export const store = configureStore({
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {
-        // Required: ignore redux-persist internal actions
         ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
       },
     }),
 })
 
-export const persistor = persistStore(store)
-
-// Infer types from the un-persisted rootReducer so RootState stays clean
-export type RootState = ReturnType<typeof rootReducer>
-export type AppDispatch = typeof store.dispatch
+export const persistor = persistStore(store);
+export type RootState = ReturnType<typeof rootReducer>;
+export type AppDispatch = typeof store.dispatch;

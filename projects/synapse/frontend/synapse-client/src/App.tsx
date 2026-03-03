@@ -1,34 +1,19 @@
-import { useState } from 'react'
-import './App.css'
+import { Routes, Route } from 'react-router-dom'
+import PublicRoute from './routes/PublicRoute'
+import ProtectedRoute from './routes/ProtectedRoute'
 import LandingPage from './pages/LandingPage'
 import ChatPage from './pages/ChatPage'
-import type { Modal, View } from './types/app'
 
 export default function App() {
-  const [view, setView] = useState<View>('landing')
-  // const [view, setView] = useState<View>('chat')
-  const [modal, setModal] = useState<Modal>('none')
-  const [model, setModel] = useState('gpt-4o-mini')
-
-  if (view === 'chat') {
-    return (
-      <ChatPage
-        model={model}
-        onModelChange={setModel}
-        onLogout={() => setView('landing')}
-      />
-    )
-  }
-
   return (
-    <LandingPage
-      showLogin={modal === 'login'}
-      showSignup={modal === 'signup'}
-      onOpenLogin={() => setModal('login')}
-      onOpenSignup={() => setModal('signup')}
-      onCloseModal={() => setModal('none')}
-      onSwitchToLogin={() => setModal('login')}
-      onSwitchToSignup={() => setModal('signup')}
-    />
+    <Routes>
+      <Route element={<PublicRoute />}>
+        <Route path="/" element={<LandingPage />} />
+      </Route>
+
+      <Route element={<ProtectedRoute />}>
+        <Route path="/chat" element={<ChatPage />} />
+      </Route>
+    </Routes>
   )
 }

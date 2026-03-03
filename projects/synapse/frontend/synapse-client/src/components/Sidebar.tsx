@@ -4,6 +4,8 @@ import SystemPromptCard from './SystemPromptCard'
 import ModelSelector from './ModelSelector'
 import TemperatureSlider from './TemperatureSlider'
 import type { SidebarProps, SystemPrompt } from '../types/sidebar'
+import { useSelector } from 'react-redux'
+import type { RootState } from '../store/config'
 
 const CHAT_HISTORY = [
   { id: 1, title: 'How to use useEffect with async', time: '2h ago',    active: true  },
@@ -19,16 +21,13 @@ const SYSTEM_PROMPTS: SystemPrompt[] = [
   { id: 'analyst', title: '📊 Data Analyst', description: 'Data interpretation, stats, and visual insights' },
 ]
 
-export default function Sidebar({
-  model,
-  onModelChange,
-  onLogout = () => {},
-  open = true,
-  onClose = () => {},
-  onToggle = () => {},
-}: SidebarProps) {
-  const [selectedPrompt, setSelectedPrompt] = useState('default')
-  const [temperature, setTemperature] = useState(0.7)
+export default function Sidebar({ model, onModelChange, onLogout = () => {}, open = true, onClose = () => {}, onToggle = () => {}, }: SidebarProps) {
+  // State Variables
+  const [selectedPrompt, setSelectedPrompt] = useState('default');
+  const [temperature, setTemperature] = useState(0.7);
+
+  // useSelector
+  const user = useSelector((state: RootState) => state.auth.user);
 
   return (
     <div
@@ -40,7 +39,7 @@ export default function Sidebar({
     >
       {/* Sidebar panel — slides in/out via transform */}
       <aside
-        className="absolute inset-y-0 left-0 flex flex-col"
+        className="absolute inset-y-0 left-0 flex flex-col z-40"
         style={{
           width: '260px',
           background: '#0f1519',
@@ -154,7 +153,7 @@ export default function Sidebar({
               fontWeight: 500,
             }}
           >
-            S
+            {user?.name?.charAt(0) ?? '?'}
           </div>
 
           {/* User info */}
@@ -163,13 +162,13 @@ export default function Sidebar({
               className="truncate"
               style={{ fontSize: '13px', color: '#e2e8f0', fontWeight: 400 }}
             >
-              Sahil Ladhania
+              {user?.name}
             </span>
             <span
               className="truncate"
               style={{ fontSize: '11px', color: '#475569' }}
             >
-              sahil@gmail.com
+              {user?.email}
             </span>
           </div>
 
@@ -190,10 +189,10 @@ export default function Sidebar({
       </div>
       </aside>
 
-      {/* Toggle button — sticks out right edge, always visible */}
+      {/* Toggle button — desktop only, sticks out right edge */}
       <button
         onClick={onToggle}
-        className="absolute top-1/2 -translate-y-1/2 z-50 flex items-center justify-center transition-colors hover:bg-[#1e1e2e]"
+        className="absolute top-1/2 -translate-y-1/2 z-50 hidden md:flex items-center justify-center transition-colors hover:bg-[#1e1e2e]"
         style={{
           right: '-20px',
           width: '20px',

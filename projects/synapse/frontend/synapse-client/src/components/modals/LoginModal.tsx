@@ -1,12 +1,64 @@
 import Logo from '../Logo'
 import type { LoginModalProps } from '../../types/modals'
+import { useState } from 'react'
+import { useMutation } from '@tanstack/react-query';
+import { loginService } from '../../services/authServices';
+import { toast } from '../../utils/toast';
+import { useDispatch } from 'react-redux';
+import { setCredentials } from '../../store/slices/authSlice';
 
-export default function LoginModal({
-  open = false,
-  onClose = () => {},
-  onSwitchToSignup = () => {},
-}: LoginModalProps) {
-  if (!open) return null
+export default function LoginModal({ open = false, onClose = () => {}, onSwitchToSignup = () => {} }: LoginModalProps) {
+  // useDispatch
+  const dispatch = useDispatch();
+
+  // State Variables
+  const [formData , setFormData] = useState({
+    email: "",
+    password: ""
+  });
+
+  // useMutation
+  const loginMutation = useMutation({
+    mutationFn: loginService,
+    onSuccess: (data) => {
+      dispatch(setCredentials(data.data));
+
+      toast({
+        variant: 'success',
+        name: "Logged In Successfully !!!",
+        description: "Welcome to Synapse."
+      });
+
+      setFormData({
+        email: "",
+        password: "",
+      });
+    },
+    onError: () => {
+      toast({
+        variant: 'error',
+        name: "Error Logging In !!!",
+        description: "There's an error logging in to Synapse ! Please try again."
+      });
+    }
+  });
+
+  // Handler Functions
+  const handleInputChange = (e) => {
+    const { name , value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: value
+    });
+  };
+
+  const handleLogin = () => {
+    loginMutation.mutate(formData);
+  };
+  
+  if (!open){
+    return null
+  };
 
   return (
     <div
@@ -50,6 +102,9 @@ export default function LoginModal({
               Email
             </label>
             <input
+              onChange={(e) => handleInputChange(e)}
+              value={formData.email}
+              name='email'
               type="email"
               placeholder="you@example.com"
               className="w-full bg-[#090d0f] border border-[#1a2228] text-[#e2ede9] text-sm rounded-xl px-4 py-2.5 outline-none placeholder-[#475569] focus:border-[#10b981] transition-colors"
@@ -67,6 +122,9 @@ export default function LoginModal({
               </button>
             </div>
             <input
+              onChange={(e) => handleInputChange(e)}
+              value={formData.password}
+              name='password'
               type="password"
               placeholder="••••••••"
               className="w-full bg-[#090d0f] border border-[#1a2228] text-[#e2ede9] text-sm rounded-xl px-4 py-2.5 outline-none placeholder-[#475569] focus:border-[#10b981] transition-colors"
@@ -76,6 +134,7 @@ export default function LoginModal({
 
         {/* Submit */}
         <button
+          onClick={handleLogin}
           className="w-full py-2.5 rounded-xl text-sm font-medium text-white transition-all hover:opacity-90 hover:shadow-[0_0_16px_#10b98144] active:scale-[0.98]"
           style={{ background: 'linear-gradient(135deg, #10b981, #6ee7b7)' }}
         >

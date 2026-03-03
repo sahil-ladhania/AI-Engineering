@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_ENDPOINT = import.meta.env.API_URL;
+const API_ENDPOINT = import.meta.env.VITE_API_URL;
 
 export async function registerService(formData: any) {
     try {

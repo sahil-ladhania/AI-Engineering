@@ -1,23 +1,16 @@
+import { useState } from 'react'
 import Logo from '../components/Logo'
 import LoginModal from '../components/modals/LoginModal'
 import SignupModal from '../components/modals/SignupModal'
-import type { LandingPageProps } from '../types/pages'
 
-export default function LandingPage({
-  showLogin = false,
-  showSignup = false,
-  onOpenLogin = () => {},
-  onOpenSignup = () => {},
-  onCloseModal = () => {},
-  onSwitchToLogin = () => {},
-  onSwitchToSignup = () => {},
-}: LandingPageProps) {
+type Modal = 'none' | 'login' | 'signup'
+
+export default function LandingPage() {
+  // State Variables
+  const [modal, setModal] = useState<Modal>('none');
+
   return (
     <div className="relative min-h-screen flex flex-col overflow-hidden bg-[#090d0f] text-[#e2ede9]">
-
-      {/* ── Full-page ambient background SVG ──
-        Positioned relative to the outer wrapper (which is relative),
-        so it covers nav + hero + footer as ONE unified canvas.      ── */}
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
         <svg
           width="100%"
@@ -80,7 +73,7 @@ export default function LandingPage({
       <nav className="relative z-10 flex items-center justify-between px-4 sm:px-8 py-4 sm:py-5">
         <Logo size="md" />
         <button
-          onClick={onOpenLogin}
+          onClick={() => setModal('login')}
           className="text-[#475569] hover:text-[#e2ede9] text-sm transition-colors px-3 py-1.5 rounded-lg border border-transparent hover:border-[#1a2228]"
         >
           Open App
@@ -104,14 +97,14 @@ export default function LandingPage({
         {/* CTAs */}
         <div className="flex flex-col sm:flex-row items-center gap-3 w-full max-w-xs sm:max-w-none sm:w-auto">
           <button
-            onClick={onOpenSignup}
+            onClick={() => setModal('signup')}
             className="w-full sm:w-auto px-6 py-3 sm:py-2.5 rounded-xl text-sm font-medium text-white transition-all hover:opacity-90 hover:shadow-[0_0_20px_#10b98144] active:scale-[0.98]"
             style={{ background: 'linear-gradient(135deg, #10b981, #6ee7b7)' }}
           >
             Open Workspace →
           </button>
           <button
-            onClick={onOpenLogin}
+            onClick={() => setModal('login')}
             className="w-full sm:w-auto px-6 py-3 sm:py-2.5 rounded-xl text-sm font-medium text-[#e2ede9] border border-[#1a2228] hover:border-[#10b981] transition-all active:scale-[0.98]"
             style={{ background: '#0f1519' }}
           >
@@ -162,14 +155,14 @@ export default function LandingPage({
 
       {/* Modals */}
       <LoginModal
-        open={showLogin}
-        onClose={onCloseModal}
-        onSwitchToSignup={onSwitchToSignup}
+        open={modal === 'login'}
+        onClose={() => setModal('none')}
+        onSwitchToSignup={() => setModal('signup')}
       />
       <SignupModal
-        open={showSignup}
-        onClose={onCloseModal}
-        onSwitchToLogin={onSwitchToLogin}
+        open={modal === 'signup'}
+        onClose={() => setModal('none')}
+        onSwitchToLogin={() => setModal('login')}
       />
     </div>
   )

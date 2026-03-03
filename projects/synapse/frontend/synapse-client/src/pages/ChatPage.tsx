@@ -1,14 +1,25 @@
 import { useState } from 'react'
 import Sidebar from '../components/Sidebar'
 import ChatArea from '../components/ChatArea'
-import type { ChatPageProps } from '../types/pages'
+import { useAppDispatch } from '../store/hooks'
+import { logout } from '../store/slices/authSlice'
+import { logoutService } from '../services/authServices'
+import { toast } from '../utils/toast'
 
-export default function ChatPage({
-  model,
-  onModelChange = () => {},
-  onLogout = () => {},
-}: ChatPageProps) {
-  const [sidebarOpen, setSidebarOpen] = useState(true)
+export default function ChatPage() {
+  const dispatch = useAppDispatch()
+  const [model, setModel] = useState('gpt-4o-mini')
+  const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 768)
+
+  const handleLogout = async () => {
+    try {
+      await logoutService()
+      dispatch(logout())
+      toast({ variant: 'success', name: 'Logged Out', description: 'You have been signed out successfully.' })
+    } catch {
+      toast({ variant: 'error', name: 'Logout Failed', description: 'Something went wrong. Please try again.' })
+    }
+  }
 
   return (
     <div
@@ -25,8 +36,8 @@ export default function ChatPage({
 
       <Sidebar
         model={model}
-        onModelChange={onModelChange}
-        onLogout={onLogout}
+        onModelChange={setModel}
+        onLogout={handleLogout}
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         onToggle={() => setSidebarOpen((o) => !o)}

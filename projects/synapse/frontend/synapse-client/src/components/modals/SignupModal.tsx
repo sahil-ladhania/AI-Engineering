@@ -1,12 +1,69 @@
 import Logo from '../Logo'
 import type { SignupModalProps } from '../../types/modals'
+import { useMutation } from '@tanstack/react-query';
+import { registerService } from '../../services/authServices';
+import { toast } from '../../utils/toast';
+import { useState } from 'react';
+import { useDispatch } from 'react-redux';
+import { setCredentials } from '../../store/slices/authSlice';
 
-export default function SignupModal({
-  open = false,
-  onClose = () => {},
-  onSwitchToLogin = () => {},
-}: SignupModalProps) {
-  if (!open) return null
+export default function SignupModal({ open = false, onClose = () => {}, onSwitchToLogin = () => {} }: SignupModalProps) {
+  // useDispatch
+  const dispatch = useDispatch();
+
+  // State Variables
+  const [formData , setFormData] = useState({
+    name: "",
+    email: "",
+    password: "",
+    confirmPassword: ""
+  });
+
+  // useMutation
+    const registerMutation = useMutation({
+      mutationFn: registerService,
+      onSuccess: (data) => {
+        dispatch(setCredentials(data.data));
+
+        toast({
+          variant: 'success',
+          name: "Registeration Successfull !!!",
+          description: "Welcome to Synapse."
+        });
+
+        setFormData({
+          name: "",
+          email: "",
+          password: "",
+          confirmPassword: ""
+        });
+      },
+      onError: () => {
+        toast({
+          variant: 'error',
+          name: "Error Registering !!!",
+          description: "There's an error registering to Synapse ! Please try again."
+        });
+      }
+    });
+  
+    // Handler Functions
+    const handleInputChange = (e) => {
+      const { name , value } = e.target;
+
+      setFormData({
+        ...formData,
+        [name]: value
+      });
+    };
+
+    const handleRegister = () => {
+      registerMutation.mutate(formData);
+    };
+
+  if (!open) {
+    return null
+  };
 
   return (
     <div
@@ -50,7 +107,10 @@ export default function SignupModal({
               Full Name
             </label>
             <input
+              onChange={(e) => handleInputChange(e)}
+              value={formData.name}
               type="text"
+              name='name'
               placeholder="Jane Smith"
               className="w-full bg-[#090d0f] border border-[#1a2228] text-[#e2ede9] text-sm rounded-xl px-4 py-2.5 outline-none placeholder-[#475569] focus:border-[#10b981] transition-colors"
             />
@@ -62,7 +122,10 @@ export default function SignupModal({
               Email
             </label>
             <input
+              onChange={(e) => handleInputChange(e)}
+              value={formData.email}
               type="email"
+              name='email'
               placeholder="you@example.com"
               className="w-full bg-[#090d0f] border border-[#1a2228] text-[#e2ede9] text-sm rounded-xl px-4 py-2.5 outline-none placeholder-[#475569] focus:border-[#10b981] transition-colors"
             />
@@ -74,7 +137,10 @@ export default function SignupModal({
               Password
             </label>
             <input
+              onChange={(e) => handleInputChange(e)}
+              value={formData.password}
               type="password"
+              name='password'
               placeholder="••••••••"
               className="w-full bg-[#090d0f] border border-[#1a2228] text-[#e2ede9] text-sm rounded-xl px-4 py-2.5 outline-none placeholder-[#475569] focus:border-[#10b981] transition-colors"
             />
@@ -86,7 +152,10 @@ export default function SignupModal({
               Confirm Password
             </label>
             <input
+              onChange={(e) => handleInputChange(e)}
+              value={formData.confirmPassword}
               type="password"
+              name='confirmPassword'
               placeholder="••••••••"
               className="w-full bg-[#090d0f] border border-[#1a2228] text-[#e2ede9] text-sm rounded-xl px-4 py-2.5 outline-none placeholder-[#475569] focus:border-[#10b981] transition-colors"
             />
@@ -95,6 +164,7 @@ export default function SignupModal({
 
         {/* Submit */}
         <button
+          onClick={handleRegister}
           className="w-full py-2.5 rounded-xl text-sm font-medium text-white transition-all hover:opacity-90 hover:shadow-[0_0_16px_#10b98144] active:scale-[0.98]"
           style={{ background: 'linear-gradient(135deg, #10b981, #6ee7b7)' }}
         >
