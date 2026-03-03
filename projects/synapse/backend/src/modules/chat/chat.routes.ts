@@ -6,12 +6,12 @@ import {
   clearHistory,
   getUsage,
 } from "./chat.controller";
-import { authMiddleware } from "../../middlewares/auth.middleware";
+import { authorize } from "../../middlewares/auth.middleware";
 import { chatLimiter } from "../../middlewares/rateLimiter.middleware";
 
 const router = Router();
 
-router.use(authMiddleware);
+router.use(authorize);
 
 router.post("/message", chatLimiter, sendMessage);
 router.post("/stream", chatLimiter, streamMessage);

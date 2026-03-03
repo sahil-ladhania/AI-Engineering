@@ -1,43 +1,61 @@
 import { Request, Response, NextFunction } from "express";
+import { ZodError } from "zod";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
+import { JsonWebTokenError, TokenExpiredError } from "jsonwebtoken";
+import { env } from "../config/env";
 
 export interface AppError extends Error {
   statusCode?: number;
 }
 
-export const errorMiddleware = (
-  err: AppError,
-  _req: Request,
-  res: Response,
-  _next: NextFunction
-): void => {
-  // 1. Determine the HTTP status code:
-  //    - Use err.statusCode if present
-  //    - Fall back to 500 for any unhandled/unknown error
-  //
-  // 2. Handle Zod validation errors (ZodError):
-  //    - Check if err is an instance of ZodError
-  //    - Flatten the issues: err.flatten().fieldErrors
-  //    - Override statusCode to 400
-  //    - Return { success: false, message: "Validation error", errors: fieldErrors }
-  //
-  // 3. Handle Prisma known request errors (PrismaClientKnownRequestError):
-  //    - Check err.code:
-  //      - "P2002" (unique constraint violation) → 409 "Already exists"
-  //      - "P2025" (record not found)            → 404 "Not found"
-  //      - Any other Prisma code                 → 400 with err.message
-  //
-  // 4. Handle JWT errors:
-  //    - JsonWebTokenError  → 401 "Invalid token"
-  //    - TokenExpiredError  → 401 "Token expired"
-  //
-  // 5. In development: log the full error stack to console for debugging
-  //    if (NODE_ENV === "development") console.error(err.stack)
-  //
-  // 6. Return the final JSON response:
-  //    res.status(statusCode).json({ success: false, message: err.message })
+export const errorMiddleware = ( err: AppError, _req: Request, res: Response, _next: NextFunction ): void => {
+  if (env.NODE_ENV === "development") {
+    console.error(err.stack);
+  };
+
+  // Zod validation error
+  if (err instanceof ZodError) {
+    res.status(400).json({
+      success: false,
+      message: "Validation error",
+      errors: err.flatten().fieldErrors,
+    });
+    return;
+  };
+
+  // Prisma known request errors
+  if (err instanceof PrismaClientKnownRequestError) {
+    if (err.code === "P2002") {
+      res.status(409).json({ success: false, message: "Email already in use" });
+      return;
+    };
+
+    if (err.code === "P2025") {
+      res.status(404).json({ success: false, message: "Record not found" });
+      return;
+    };
+
+    res.status(400).json({ success: false, message: err.message });
+    return;
+  };
+
+  // JWT errors
+  if (err instanceof TokenExpiredError) {
+    res.status(401).json({ success: false, message: "Session Expired, Please Log In Again." });
+    return;
+  }
+  if (err instanceof JsonWebTokenError) {
+    res.status(401).json({ 
+      success: false, 
+      message: "Invalid Token." 
+    });
+    return;
+  }
+
+  // Fallback
   const statusCode = err.statusCode ?? 500;
   res.status(statusCode).json({
     success: false,
-    message: err.message,
+    message: err.message ?? "Internal server error",
   });
 };

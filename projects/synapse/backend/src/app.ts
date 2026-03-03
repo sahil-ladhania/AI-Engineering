@@ -12,11 +12,20 @@ import { globalLimiter } from "./middlewares/rateLimiter.middleware";
 const app = express();
 
 app.use(helmet());
-app.use(cors({ origin: env.FRONTEND_URL, credentials: true }));
+
+app.use(cors({ 
+  origin: env.FRONTEND_URL, 
+  credentials: true 
+}));
+
 if (env.NODE_ENV === "development") {
   app.use(morgan("dev"));
-}
-app.use(express.json({ limit: "10kb" }));
+};
+
+app.use(express.json({ 
+  limit: "10kb" 
+}));
+
 app.use(cookieParser());
 app.use(globalLimiter);
 

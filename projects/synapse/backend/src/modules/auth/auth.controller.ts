@@ -1,9 +1,12 @@
 import { Request, Response, NextFunction } from "express";
-import { registerSchema } from "./auth.validation";
-import { registerUser } from "./auth.service";
-import jwt from 'jsonwebtoken'
+import { loginSchema, registerSchema } from "./auth.validation";
+import { checkIfUserExist, getUserById, registerUser } from "./auth.service";
+import { AppError } from "../../middlewares/error.middleware";
+import jwt from 'jsonwebtoken';
+import { comparePasswords, hashPassword } from "../../utils/password";
+import { env } from "../../config/env";
+import redis from "../../config/redis";
 
-// Cookie name used consistently across login, logout, and authMiddleware
 export const COOKIE_NAME = "jwt_token";
 
 export const COOKIE_OPTIONS = {
@@ -12,81 +15,147 @@ export const COOKIE_OPTIONS = {
   sameSite: "strict" as const,
 };
 
-export const register = async ( _req: Request, res: Response, next: NextFunction ): Promise<void> => {
+export const register = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    // 1. Parse req.body
-    // 2. Validate body against registerSchema
-    //    - If validation fails → call next(zodError) and return early
-    // 3. Call registerUser({ name, email, password })
-    //    - If email already exists → service throws 409 → caught below → next(err)
-    // 4. Sign a JWT for the newly created user (auto-login after register):
-    //    jwt.sign({ id: user.id, email: user.email }, env.JWT_SECRET, { expiresIn: env.JWT_EXPIRES_IN })
-    // 5. Set the JWT as a httpOnly cookie using COOKIE_NAME and COOKIE_OPTIONS:
-    //    maxAge: 7 * 24 * 60 * 60 * 1000  (convert JWT_EXPIRES_IN "7d" → ms)
-    // 6. Strip the password field from the user object before sending
-    // 7. Return 201 { success: true, data: { user } }
-    res.status(200).json({ success: true });
-  }
+    const validatedData = registerSchema.safeParse(req);
+    if (!validatedData.success) {
+      return next(validatedData.error);
+    };
+
+    const { name, email, password } = validatedData.data.body;
+
+    const hashedPassword = await hashPassword(password);
+
+    const newUser = await registerUser({ name, email, password: hashedPassword });
+
+    const token = jwt.sign(
+      { 
+        id: newUser.id, 
+        email: newUser.email 
+      },
+      env.JWT_SECRET,
+      { 
+        expiresIn: env.JWT_EXPIRES_IN as jwt.SignOptions['expiresIn'] 
+      }
+    );
+
+    res.cookie(COOKIE_NAME, token, {
+      ...COOKIE_OPTIONS,
+      maxAge: (7 * 24 * 60 * 60 * 1000),
+    });
+
+    const { password: _, ...userWithoutPassword } = newUser;
+
+    res.status(201).json({
+      success: true,
+      data: { user: userWithoutPassword },
+    });
+  } 
   catch (err) {
     next(err);
   }
 };
 
-export const login = async (
-  _req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
-  // 1. Parse req.body
-  // 2. Validate body against loginSchema
-  //    - If validation fails → call next(zodError) and return early
-  // 3. Call loginUser(email, password)
-  //    - If credentials are invalid → service throws 401 → caught below → next(err)
-  // 4. Set the JWT as a httpOnly cookie:
-  //    res.cookie(COOKIE_NAME, token, {
-  //      ...COOKIE_OPTIONS,
-  //      maxAge: 7 * 24 * 60 * 60 * 1000,   ← 7 days in ms, must match JWT_EXPIRES_IN
-  //    })
-  // 5. Strip the password field from the user object before sending
-  // 6. Return 200 { success: true, data: { user } }
-  //    - Do NOT send the token in the response body — it lives in the cookie only
+export const login = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    res.status(200).json({ success: true });
-  } catch (err) {
+    const validatedData = loginSchema.safeParse(req);
+    if (!validatedData.success) {
+      return next(validatedData.error);
+    }
+
+    const { email, password } = validatedData.data.body;
+
+    const user = await checkIfUserExist(email);
+    if (!user) {
+      const err = new Error("Invalid credentials") as AppError;
+      err.statusCode = 401;
+      return next(err);
+    }
+
+    const isMatch = await comparePasswords({ password, hashedPassword: user.password });
+    if (!isMatch) {
+      const err = new Error("Invalid credentials") as AppError;
+      err.statusCode = 401;
+      return next(err);
+    }
+
+    const token = jwt.sign(
+      { 
+        id: user.id, 
+        email: user.email 
+      },
+      env.JWT_SECRET,
+      { 
+        expiresIn: env.JWT_EXPIRES_IN as jwt.SignOptions['expiresIn'] 
+      }
+    );
+
+    res.cookie(COOKIE_NAME, token, {
+      ...COOKIE_OPTIONS,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    const { password: _, ...userWithoutPassword } = user;
+
+    res.status(200).json({
+      success: true,
+      data: { 
+        user: userWithoutPassword 
+      },
+    });
+  } 
+  catch (err) {
     next(err);
   }
 };
 
-export const logout = async (
-  _req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
-  // 1. Clear the cookie using the same name and options used when setting it:
-  //    res.clearCookie(COOKIE_NAME, COOKIE_OPTIONS)
-  //    - Options must match exactly — mismatched options cause the browser to ignore clearCookie
-  // 2. Return 200 { success: true, message: "Logged out successfully" }
+export const logout = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    res.status(200).json({ success: true });
-  } catch (err) {
+    const token = req.cookies[COOKIE_NAME];
+
+    if (token) {
+      const decoded = jwt.decode(token) as { exp?: number } | null;
+      if (decoded?.exp) {
+        const ttl = decoded.exp - Math.floor(Date.now() / 1000);
+        if (ttl > 0) {
+          await redis.set(`blacklist:${token}`, "1", "EX", ttl);
+        };
+      };
+    };
+
+    res.clearCookie(COOKIE_NAME, COOKIE_OPTIONS);
+    res.status(200).json({ success: true, message: "Logged Out Successfully." });
+  } 
+  catch (err) {
     next(err);
   }
 };
 
-export const getMe = async (
-  _req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
-  // 1. Read userId from req.user.id (populated by authMiddleware)
-  //    - If req.user is undefined → throw AppError("Not authenticated", 401)
-  // 2. Call getUserById(userId)
-  //    - If user not found in DB → throw AppError("User not found", 404)
-  // 3. Strip the password field from the returned user object
-  // 4. Return 200 { success: true, data: { user } }
+export const getMe = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    res.status(200).json({ success: true });
-  } catch (err) {
+    if (!req.user) {
+      const err = new Error("Not authenticated") as AppError;
+      err.statusCode = 401;
+      return next(err);
+    };
+
+    const user = await getUserById(req.user.id);
+    if (!user) {
+      const err = new Error("User not found") as AppError;
+      err.statusCode = 404;
+      return next(err);
+    };
+
+    const { password: _, ...userWithoutPassword } = user;
+
+    res.status(200).json({
+      success: true,
+      data: { 
+        user: userWithoutPassword 
+      },
+    });
+  } 
+  catch (err) {
     next(err);
   }
 };

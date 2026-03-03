@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 
 export const sendMessage = async (
-  _req: Request,
+  req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
@@ -20,7 +20,7 @@ export const sendMessage = async (
 };
 
 export const streamMessage = async (
-  _req: Request,
+  req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
@@ -46,7 +46,7 @@ export const streamMessage = async (
 };
 
 export const getHistory = async (
-  _req: Request,
+  req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
@@ -64,7 +64,7 @@ export const getHistory = async (
 };
 
 export const clearHistory = async (
-  _req: Request,
+  req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
@@ -80,7 +80,7 @@ export const clearHistory = async (
 };
 
 export const getUsage = async (
-  _req: Request,
+  req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
