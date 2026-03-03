@@ -1,23 +1,58 @@
-export const countTokens = (_text: string, _model: string): number => {
-  // 1. Map _model to a tiktoken-compatible model name if needed:
-  //    - "gpt-4o" and "gpt-4o-mini" are both supported by tiktoken directly
-  //    - If an unsupported model is passed → throw new Error("Unsupported model: ...")
-  //
-  // 2. Get the encoder for the model:
-  //    encoding_for_model(_model as TiktokenModel)
-  //    - This returns a model-specific BPE encoder
-  //
-  // 3. Encode the input text into tokens:
-  //    encoder.encode(_text)
-  //    - Returns a Uint32Array of token IDs
-  //
-  // 4. Read the token count:
-  //    encoded.length
-  //
-  // 5. Free the encoder to release WASM memory:
-  //    encoder.free()
-  //    - Must always run, even on error — wrap steps 3-4 in try/finally
-  //
-  // 6. Return the token count as a number
-  throw new Error("Not implemented");
+import { get_encoding, TiktokenEncoding } from "tiktoken";
+
+export type ChatMessage = {
+  role: string;
+  content: string;
+  name?: string;
+};
+
+const MODEL_ENCODING_MAP: Record<string, TiktokenEncoding> = {
+  "gpt-4o": "o200k_base",
+  "gpt-4o-mini": "o200k_base",
+};
+
+function getEncoder(model: string) {
+  const encoding = MODEL_ENCODING_MAP[model];
+
+  if (!encoding) {
+    throw new Error(`Unsupported model for token counting: "${model}"`);
+  };
+
+  return get_encoding(encoding);
+};
+
+export function countTokens(text: string, model: string): number {
+  const encoder = getEncoder(model);
+
+  try {
+    return encoder.encode(text).length;
+  } 
+  finally {
+    encoder.free();
+  }
+};
+
+export function countMessageTokens(messages: ChatMessage[], model: string): number {
+  const encoder = getEncoder(model);
+
+  let total = 0;
+
+  try {
+    for (const message of messages) {
+      total += 3; 
+      total += encoder.encode(message.role).length;
+      total += encoder.encode(message.content).length;
+      if (message.name) {
+        total += encoder.encode(message.name).length;
+        total += 1;
+      };
+    };
+
+    total += 3;
+  }
+  finally {
+    encoder.free();
+  };
+
+  return total;
 };

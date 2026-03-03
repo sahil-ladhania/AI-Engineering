@@ -8,22 +8,35 @@ datasource db {
 }
 
 model User {
-  id        String    @id @default(cuid())
-  email     String    @unique
+  id        String   @id @default(cuid())
+  email     String   @unique
   password  String
   name      String?
-  createdAt DateTime  @default(now())
-  messages  Message[]
+  createdAt DateTime @default(now())
+  chats     Chat[]
+}
+
+model Chat {
+  id           String    @id @default(cuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title        String    @default("New Chat")
+  model        String    @default("gpt-4o-mini")
+  temperature  Float     @default(0.7)
+  maxTokens    Int       @default(1024)
+  systemPrompt String?   @db.Text
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  messages     Message[]
 }
 
 model Message {
   id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
+  chatId    String
+  chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
   role      String
-  content   String
+  content   String   @db.Text
   tokens    Int      @default(0)
   cost      Float    @default(0)
-  model     String
   createdAt DateTime @default(now())
 }
