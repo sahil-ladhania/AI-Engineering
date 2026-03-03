@@ -2,6 +2,7 @@ export interface SystemPrompt {
   id: string
   title: string
   description: string
+  temperature: number
 }
 
 export interface SidebarProps {
@@ -11,6 +12,7 @@ export interface SidebarProps {
   open?: boolean
   onClose?: () => void
   onToggle?: () => void
+  handleCreateNewChat?:  () => void
 }
 
 export interface ModelSelectorProps {

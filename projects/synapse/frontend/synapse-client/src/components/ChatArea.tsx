@@ -76,7 +76,7 @@ The key advantage is that it actually cancels the in-flight network request`,
   cost: '',
 }
 
-export default function ChatArea({ model, onToggleSidebar = () => {} }: ChatAreaProps) {
+export default function ChatArea({ model, chatId, onToggleSidebar = () => {} }: ChatAreaProps) {
   return (
     <div className="flex-1 flex flex-col min-h-0 min-w-0">
       {/* Top header */}
@@ -108,31 +108,42 @@ export default function ChatArea({ model, onToggleSidebar = () => {} }: ChatArea
         </div>
       </div>
 
-      {/* Scrollable chat */}
+      {/* Scrollable area */}
       <div className="flex-1 overflow-y-auto py-4 md:py-6 px-3 md:px-6">
-        <div className="max-w-[760px] mx-auto flex flex-col gap-4 md:gap-5">
-          {SAMPLE_MESSAGES.map((msg) => (
+        {chatId ? (
+          /* Existing chat — message list */
+          <div className="max-w-[760px] mx-auto flex flex-col gap-4 md:gap-5">
+            {SAMPLE_MESSAGES.map((msg) => (
+              <MessageBubble
+                key={msg.id}
+                role={msg.role}
+                content={msg.content}
+                tokens={msg.tokens}
+                cost={msg.cost}
+              />
+            ))}
             <MessageBubble
-              key={msg.id}
-              role={msg.role}
-              content={msg.content}
-              tokens={msg.tokens}
-              cost={msg.cost}
+              key={STREAMING_MESSAGE.id}
+              role="ai"
+              content={STREAMING_MESSAGE.content}
+              tokens={0}
+              cost=""
+              streaming={true}
             />
-          ))}
-          <MessageBubble
-            key={STREAMING_MESSAGE.id}
-            role="ai"
-            content={STREAMING_MESSAGE.content}
-            tokens={0}
-            cost=""
-            streaming={true}
-          />
-        </div>
+          </div>
+        ) : (
+          /* New chat — welcome state */
+          <div className="h-full flex flex-col items-center justify-center gap-3 text-center px-4">
+            <Logo size="lg" />
+            <p className="text-[#475569] text-sm mt-1">
+              Start a conversation to create a new chat.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Input bar */}
-      <InputBar streaming={true} />
+      <InputBar streaming={false} />
     </div>
   )
 }

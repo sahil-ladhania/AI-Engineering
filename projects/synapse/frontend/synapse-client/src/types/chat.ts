@@ -16,6 +16,7 @@ export interface MessageBubbleProps {
 
 export interface ChatAreaProps {
   model: string
+  chatId?: string
   onToggleSidebar?: () => void
 }
 

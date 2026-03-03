@@ -13,6 +13,7 @@ export default function App() {
 
       <Route element={<ProtectedRoute />}>
         <Route path="/chat" element={<ChatPage />} />
+        <Route path="/chat/:chatId" element={<ChatPage />} />
       </Route>
     </Routes>
   )
