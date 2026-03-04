@@ -17,9 +17,12 @@ export interface MessageBubbleProps {
 export interface ChatAreaProps {
   model: string
   chatId?: string
+  personaId: string
+  temperature: number
   onToggleSidebar?: () => void
 }
 
 export interface InputBarProps {
   streaming?: boolean
+  onSubmit: (text: string) => void
 }

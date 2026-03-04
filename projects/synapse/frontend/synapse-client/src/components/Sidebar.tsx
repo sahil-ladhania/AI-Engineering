@@ -1,37 +1,22 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import Logo from './Logo'
 import SystemPromptCard from './SystemPromptCard'
 import ModelSelector from './ModelSelector'
 import TemperatureSlider from './TemperatureSlider'
-import type { SidebarProps, SystemPrompt } from '../types/sidebar'
+import type { SidebarProps } from '../types/sidebar'
 import { useSelector } from 'react-redux'
 import type { RootState } from '../store/config'
 import { useQuery } from '@tanstack/react-query'
-import { getChatsService } from '../services/chatServices'
+import { getChatsService, getUsageService } from '../services/chatServices'
+import { getAllPersonasService } from '../services/personaServices'
 
-const CHAT_HISTORY = [
-  { id: 1, title: 'How to use useEffect with async', time: '2h ago',    active: true  },
-  { id: 2, title: 'Build a REST API in Node.js',    time: 'Yesterday',  active: false },
-  { id: 3, title: 'CSS Grid vs Flexbox explained',  time: '2 days ago', active: false },
-  { id: 4, title: 'Python list comprehensions',     time: '3 days ago', active: false },
-]
 
-const SYSTEM_PROMPTS: SystemPrompt[] = [
-  { id: 'default',               title: '🧠 Default Assistant',     description: 'Balanced, helpful responses for any task',                          temperature: 0.7 },
-  { id: 'code-expert',           title: '💻 Code Expert',           description: 'Deep technical knowledge, prefers code over prose',                 temperature: 0.2 },
-  { id: 'content-writer',        title: '✍️ Content Writer',        description: 'Clear, engaging writing and editing assistance',                    temperature: 0.7 },
-  { id: 'data-analyst',          title: '📊 Data Analyst',          description: 'Data interpretation, stats, and visual insights',                   temperature: 0.5 },
-  { id: 'socratic-tutor',        title: '🎓 Socratic Tutor',        description: 'Guides you to answers through questions, never tells you directly', temperature: 0.3 },
-  { id: 'devils-advocate',       title: '😈 Devil\'s Advocate',     description: 'Argues the opposite of whatever you say',                           temperature: 0.9 },
-  { id: 'security-reviewer',     title: '🔒 Security Reviewer',     description: 'Reviews code and architecture for vulnerabilities',                 temperature: 0.1 },
-  { id: 'creative-brainstormer', title: '💡 Creative Brainstormer', description: 'Uninhibited ideation — wild, unconventional, energetic',            temperature: 1.2 },
-  { id: 'rubber-duck-debugger',  title: '🦆 Rubber Duck Debugger',  description: 'Helps you find bugs by asking questions, never tells you the answer', temperature: 0.4 },
-]
+export default function Sidebar({ model, onModelChange, personaId, onPersonaChange, temperature, onTemperatureChange, onLogout = () => {}, open = true, onClose = () => {}, onToggle = () => {}, handleCreateNewChat = () => {} }: SidebarProps) {
+  // useNavigate
+  const navigate = useNavigate();
 
-export default function Sidebar({ model, onModelChange, onLogout = () => {}, open = true, onClose = () => {}, onToggle = () => {}, handleCreateNewChat = () => {} }: SidebarProps) {
   // State Variables
-  const [selectedPrompt, setSelectedPrompt] = useState('default');
-  const [temperature, setTemperature] = useState(0.7);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   // useSelector
@@ -41,6 +26,16 @@ export default function Sidebar({ model, onModelChange, onLogout = () => {}, ope
   const { data: chatHistory } = useQuery({
     queryKey: ["chatHistory"],
     queryFn: getChatsService
+  });
+
+  const { data: usage } = useQuery({
+    queryKey: ["usage"],
+    queryFn: getUsageService
+  });
+
+  const { data: personas } = useQuery({
+    queryKey: ["personas"],
+    queryFn: getAllPersonasService
   });
 
   return (
@@ -107,7 +102,7 @@ export default function Sidebar({ model, onModelChange, onLogout = () => {}, ope
                   <button
                     type="button"
                     key={chat.id}
-                    onClick={() => {}}
+                    onClick={() => navigate(`/chat/${chat.id}`)}
                     className="w-full text-left flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors hover:bg-[#ffffff07]"
                     style={
                       chat.active
@@ -132,15 +127,15 @@ export default function Sidebar({ model, onModelChange, onLogout = () => {}, ope
               Persona
             </h3>
             <div className="flex flex-col gap-0.5">
-              {SYSTEM_PROMPTS.map((p) => (
+              {personas?.map((p: any) => (
                 <SystemPromptCard
                   key={p.id}
-                  title={p.title}
+                  title={`${p.emoji} ${p.name}`}
                   description={p.description}
-                  selected={selectedPrompt === p.id}
+                  selected={personaId === p.id}
                   onClick={() => {
-                    setSelectedPrompt(p.id);
-                    setTemperature(p.temperature);
+                    onPersonaChange(p.id);
+                    onTemperatureChange(p.temperature);
                   }}
                 />
               ))}
@@ -176,7 +171,7 @@ export default function Sidebar({ model, onModelChange, onLogout = () => {}, ope
             {settingsOpen && (
               <div className="flex flex-col gap-3 pt-1">
                 <ModelSelector value={model} onChange={onModelChange} />
-                <TemperatureSlider value={temperature} onChange={setTemperature} />
+                <TemperatureSlider value={temperature} onChange={onTemperatureChange} />
               </div>
             )}
           </section>
@@ -208,7 +203,7 @@ export default function Sidebar({ model, onModelChange, onLogout = () => {}, ope
 
           {/* Session cost badge */}
           <span className="shrink-0 text-[10px] text-[#334e5a] bg-[#161f26] px-1.5 py-0.5 rounded-md">
-            $0.00
+            ${usage?.totalCost}
           </span>
 
           {/* Sign out */}

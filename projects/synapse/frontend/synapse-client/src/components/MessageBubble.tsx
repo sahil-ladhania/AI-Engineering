@@ -1,8 +1,6 @@
 import type { MessageBubbleProps } from '../types/chat'
 
-// ── Fix 1: parse inline code and code blocks into styled elements ──
 function renderContent(text: string) {
-  // Split on triple-backtick blocks first
   const blocks = text.split(/(```[\s\S]*?```)/g)
 
   return blocks.map((block, i) => {
@@ -17,7 +15,6 @@ function renderContent(text: string) {
       )
     }
 
-    // Within a text segment, handle inline backtick code
     const inlineParts = block.split(/(`[^`\n]+`)/g)
     return (
       <span key={i} className="whitespace-pre-wrap">
@@ -35,7 +32,6 @@ function renderContent(text: string) {
   })
 }
 
-// ── Fix 3: Synapse logo SVG at 16px ──
 function SynapseLogoSmall() {
   return (
     <svg
@@ -113,7 +109,6 @@ export default function MessageBubble({
         </div>
       </div>
 
-      {/* Fix 2: bouncing dots instead of "Generating…" */}
       {streaming ? (
         <div className="flex items-center gap-1 pl-10 mt-0.5">
           <span className="dot-pulse" style={{ animationDelay: '0s' }} />

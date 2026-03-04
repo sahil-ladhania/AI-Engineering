@@ -19,6 +19,8 @@ export default function ChatPage() {
 
   // State Variables
   const [model, setModel] = useState('gpt-4o-mini');
+  const [personaId, setPersonaId] = useState('default');
+  const [temperature, setTemperature] = useState(0.7);
   const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 768);
 
   // Handler Functions
@@ -61,6 +63,10 @@ export default function ChatPage() {
       <Sidebar
         model={model}
         onModelChange={setModel}
+        personaId={personaId}
+        onPersonaChange={setPersonaId}
+        temperature={temperature}
+        onTemperatureChange={setTemperature}
         onLogout={handleLogout}
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
@@ -71,8 +77,10 @@ export default function ChatPage() {
       <ChatArea
         model={model}
         chatId={chatId}
+        personaId={personaId}
+        temperature={temperature}
         onToggleSidebar={() => setSidebarOpen((o) => !o)}
       />
     </div>
   )
-}
+};

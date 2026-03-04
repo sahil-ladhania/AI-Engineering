@@ -1,9 +1,33 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import type { InputBarProps } from '../types/chat'
 
-export default function InputBar({ streaming = false }: InputBarProps) {
+export default function InputBar({ streaming = false, onSubmit }: InputBarProps) {
+  // State Variables
   const [text, setText] = useState('')
   const hasText = text.trim().length > 0
+
+  // useRef
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  // Handler Functions
+  const handleSubmit = () => {
+    if (!hasText){
+      return;
+    };
+    const trimmedText = text.trim();
+    onSubmit(trimmedText);
+    setText('');
+    if (textareaRef.current){
+      textareaRef.current.style.height = 'auto';
+    };
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit();
+    }
+  };
 
   return (
     <div
@@ -13,8 +37,10 @@ export default function InputBar({ streaming = false }: InputBarProps) {
       <div className="max-w-[760px] mx-auto flex flex-col gap-2">
         <div className="relative">
           <textarea
+            ref={textareaRef}
             rows={1}
             value={text}
+            name='input-prompt'
             onChange={(e) => {
               setText(e.target.value)
               e.target.style.height = 'auto'
@@ -33,6 +59,7 @@ export default function InputBar({ streaming = false }: InputBarProps) {
             onBlur={(e) => {
               e.target.style.boxShadow = 'none'
             }}
+            onKeyDown={handleKeyDown}
           />
 
           {/* Send / Stop button */}
@@ -48,6 +75,7 @@ export default function InputBar({ streaming = false }: InputBarProps) {
               </button>
             ) : (
               <button
+                onClick={handleSubmit}
                 disabled={!hasText}
                 className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-150 ${
                   hasText

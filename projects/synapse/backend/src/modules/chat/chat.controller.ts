@@ -234,7 +234,7 @@ export const streamMessage = async (req: Request, res: Response, next: NextFunct
       res.write(`data: ${JSON.stringify({
         type: 'chunk',
         content: text
-      })}`)
+      })}\n\n`);
     };
 
     const { reply, tokensUsed, cost, model } = await streamMessageService(chatId, message, onChunk);
@@ -252,7 +252,7 @@ export const streamMessage = async (req: Request, res: Response, next: NextFunct
     res.write(`data: ${JSON.stringify({
       type: 'error',
       message: (err as Error).message
-    })}`);
+    })}\n\n`);
     res.end();
   }
 };

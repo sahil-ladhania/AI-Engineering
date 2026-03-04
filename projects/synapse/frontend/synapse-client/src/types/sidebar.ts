@@ -8,11 +8,15 @@ export interface SystemPrompt {
 export interface SidebarProps {
   model: string
   onModelChange: (m: string) => void
+  personaId: string
+  onPersonaChange: (id: string) => void
+  temperature: number
+  onTemperatureChange: (val: number) => void
   onLogout?: () => void
   open?: boolean
   onClose?: () => void
   onToggle?: () => void
-  handleCreateNewChat?:  () => void
+  handleCreateNewChat?: () => void
 }
 
 export interface ModelSelectorProps {
