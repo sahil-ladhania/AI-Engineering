@@ -17,7 +17,7 @@ export default function ChatArea({ model, chatId, personaId, temperature, onTogg
   const [streamingContent, setStreamingContent] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
 
-  // Ref to skip DB fetch when chatId changes due to streaming navigation
+  // useRef
   const fromStreamRef = useRef(false);
 
   // SSE Parser Helper
@@ -122,7 +122,7 @@ export default function ChatArea({ model, chatId, personaId, temperature, onTogg
     };
   };
 
-  // useEffect — load existing messages when opening a chat from history
+  // useEffect
   useEffect(() => {
     if (!chatId) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -130,9 +130,8 @@ export default function ChatArea({ model, chatId, personaId, temperature, onTogg
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setStreamingContent('');
       return;
-    }
+    };
 
-    // Skip DB fetch if chatId just changed due to streaming navigation — messages already in state
     if (fromStreamRef.current) {
       fromStreamRef.current = false;
       return;
