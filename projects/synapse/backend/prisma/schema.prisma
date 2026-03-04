@@ -16,6 +16,16 @@ model User {
   chats     Chat[]
 }
 
+model Persona {
+  id          String   @id
+  name        String
+  description String   @db.Text
+  emoji       String
+  temperature Float
+  prompt      String   @db.Text
+  chats       Chat[]
+}
+
 model Chat {
   id           String    @id @default(cuid())
   userId       String
@@ -24,19 +34,26 @@ model Chat {
   model        String    @default("gpt-4o-mini")
   temperature  Float     @default(0.7)
   maxTokens    Int       @default(1024)
+  personaId    String?   @default("default")
+  persona      Persona?  @relation(fields: [personaId], references: [id])
   systemPrompt String?   @db.Text
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
   messages     Message[]
 }
 
+enum MessageRole {
+  user
+  assistant
+}
+
 model Message {
-  id        String   @id @default(cuid())
+  id        String      @id @default(cuid())
   chatId    String
-  chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
-  role      String
-  content   String   @db.Text
-  tokens    Int      @default(0)
-  cost      Float    @default(0)
-  createdAt DateTime @default(now())
+  chat      Chat        @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  role      MessageRole
+  content   String      @db.Text
+  tokens    Int         @default(0)
+  cost      Float       @default(0)
+  createdAt DateTime    @default(now())
 }
